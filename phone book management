@@ -74,16 +74,98 @@ void Phonebook::listRecord() {
 }
 
 void Phonebook::modifyRecord() {
-    // Similar to addRecord but also update the existing record
+    struct Person p;
+    char name[MAX_NAME_LENGTH];
+    printf("\nEnter the name of the person to modify: ");
+    fgets(name, MAX_NAME_LENGTH, stdin);
+    name[strcspn(name, "\n")] = 0; // Remove newline character
+
+    bool found = false;
+    long int pos = ftell(file);
+
+    while (fread(&p, sizeof(p), 1, file) == 1) {
+        if (strcmp(p.name, name) == 0) {
+            found = true;
+            printf("\nEnter new data:\n");
+            p.name = getStringInput("Enter name: ");
+            p.address = getStringInput("Enter the address: ");
+            p.father_name = getStringInput("Enter father's name: ");
+            p.mother_name = getStringInput("Enter mother's name: ");
+            p.mble_no = getStringInput("Enter phone no.: ");
+            p.sex = getStringInput("Enter sex: ");
+            p.mail = getStringInput("Enter e-mail: ");
+            p.citision_no = getStringInput("Enter citizen no.: ");
+
+            fseek(file, pos, SEEK_SET); // Move file pointer to the beginning of the record
+            fwrite(&p, sizeof(p), 1, file); // Write modified record
+            printf("\nRecord modified successfully.\n");
+            break;
+        }
+        pos = ftell(file);
+    }
+
+    if (!found) {
+        printf("\nRecord not found.\n");
+    }
 }
 
 void Phonebook::searchRecord() {
-    // Similar to listRecord but search for a specific record
+    struct Person p;
+    char name[MAX_NAME_LENGTH];
+    printf("\nEnter the name of the person to search: ");
+    fgets(name, MAX_NAME_LENGTH, stdin);
+    name[strcspn(name, "\n")] = 0; // Remove newline character
+
+    bool found = false;
+
+    while (fread(&p, sizeof(p), 1, file) == 1) {
+        if (strcmp(p.name, name) == 0) {
+            found = true;
+            printf("\nRecord found:\n");
+            printf("Name: %s\nAddress: %s\nFather's Name: %s\nMother's Name: %s\nPhone No.: %s\nSex: %s\nE-mail: %s\nCitizen No.: %s\n",
+                   p.name, p.address, p.father_name, p.mother_name, p.mble_no, p.sex, p.mail, p.citision_no);
+            break;
+        }
+    }
+
+    if (!found) {
+        printf("\nRecord not found.\n");
+    }
 }
 
 void Phonebook::deleteRecord() {
-    // Similar to searchRecord but delete the found record
+    struct Person p;
+    char name[MAX_NAME_LENGTH];
+    printf("\nEnter the name of the person to delete: ");
+    fgets(name, MAX_NAME_LENGTH, stdin);
+    name[strcspn(name, "\n")] = 0; // Remove newline character
+
+    bool found = false;
+    FILE *temp = fopen("temp", "wb");
+
+    while (fread(&p, sizeof(p), 1, file) == 1) {
+        if (strcmp(p.name, name) != 0) {
+            fwrite(&p, sizeof(p), 1, temp);
+        } else {
+            found = true;
+        }
+    }
+
+    fclose(file);
+    fclose(temp);
+
+    remove("project");
+    rename("temp", "project");
+
+    if (found) {
+        printf("\nRecord deleted successfully.\n");
+    } else {
+        printf("\nRecord not found.\n");
+    }
+
+    file = fopen("project", "ab+");
 }
+
 
 void Phonebook::writePersonToFile(struct Person *p) {
     fwrite(p, sizeof(struct Person), 1, file);
